@@ -1,11 +1,9 @@
-
 // helper func
 function id(n){return document.getElementById(n);}
 var clone = (function(){ 
   return function (obj) { Clone.prototype=obj; return new Clone() };
   function Clone(){}
 }());
-
 // this function does not clone the object inside, only the array refs
 function cloneArr(arr){
 	var cloned = [];
@@ -37,6 +35,7 @@ function Group()
 	this['vacancy']=0;
 	this['sessions']=[];
 	this['codedTime']=[0,0,0,0,0];
+    this['badassTime']=[0,0,0,0,0];
 	this['course']=null;
 }
 
@@ -73,9 +72,9 @@ function processSession(s,g)
 	for (var i = start; i < end; i++)
 	{
 		if (!odd) // even first at lower position
-			s.iTime |= 1 << i * 2;
+			s.iTime|=1<<i;//s.iTime |= 1 << i * 2;
 		if (!even)// odd at higher position
-			s.iTime |= 1 << i * 2 + 1;
+			s.iTime|=1<<(i+oddShift);//s.iTime |= 1 << i * 2 + 1;
 	}
 	g.sessions.push(s);
 }
@@ -84,8 +83,11 @@ function processSession(s,g)
 // update group's vacancy, and put it into store
 function processGroup(g)
 {
-	for (var i = 0; i < g.sessions.length; i++)
-		g.codedTime[g.sessions[i].iDay] |= g.sessions[i].iTime;
+    badass=id("badass").checked;
+	for (var i = 0; i < g.sessions.length; i++) {
+        if (g.sessions[i].type.indexOf("LEC")!=0) g.badassTime[g.sessions[i].iDay] |= g.sessions[i].iTime;
+        g.codedTime[g.sessions[i].iDay] |= g.sessions[i].iTime;
+    }
 	//if(useVacancy && !vacancyStore.TryGetValue(g.index, out g.vacancy))
 	//	report+="Error: vacancy information not found for "+g.index.ToString()+System.Environment.NewLine;
 	g.vacancy = vacancyStore[g.index];
@@ -104,29 +106,73 @@ var useVacancy = false;
 // each timetable is an array like this:
 //   [score, codedTime, chosenGroups]
 var schedules = [];
-
+var oddShift=15;
+var allOnes=(1<<oddShift)-1;
 
 // Initialize penalties for score computation
 function InitV0V3(){
-	p0 = Math.floor(id("v0").value);
-	p1 = Math.floor(id("v1").value);
-	p2 = Math.floor(id("v2").value);
-	p3 = Math.floor(id("v3").value);
+	p0 = Math.floor(id("v0").value)+0.0;
+	p1 = Math.floor(id("v1").value)+0.0;
+	p2 = Math.floor(id("v2").value)+0.0;
+	p3 = Math.floor(id("v3").value)+0.0;
+	freeDay = Math.floor(id("freeDay").value/2)+0.0;
+	lunchBreak = Math.floor(id("lunchBreak").value/2)+0.0;
+	setLunch = (lunchBreak!=0)? true: false;
+	lunchBin=(1<<3)-1;
+    badass=id("badass").checked;
+	console.log("badass"+badass);
 }
 // this is the function we use to score a clash-free timetable
 // - penalize early morning sessions
 function Score(codedTime) {
 	// iStart: 0 for 830, 1 for 930
 	// we start at 0. If something bad is found, we reduce the score 
-	var score = 0; 
+	var score = 0.0; 
 	// go through each day, look for things to penalize
 	// we look at bit 0, 1, 2 and 3
 	// 0 and 1 = 830-930, even and odd week. 
 	// 2 and 3 = 930-1030, even and odd week
+	for(var i = 0; i<5; i++){
+		tmp=codedTime[i];
+		/*while ((tmp>0)&&(tmp&3==0)) tmp>>2;
+		
+		if (tmp<1) {
+			score -= freeDay;}
+		else {
+			score+=Math.log(tmp);
+		}
+		*/
+		even=tmp&allOnes;
+		odd=(tmp>>oddShift)&allOnes;
+
+		tmp2 = (even<1) ? (0.0-freeDay) : (Math.log(even));
+		score +=tmp2;
+		tmp2 = (odd<1) ? (0.0-freeDay) : (Math.log(odd));
+		score +=tmp2;
+
+		for (j=0;j<oddShift;j++){
+			if (even&1==1) break;
+			even>>1;
+		}
+		for (j=0;j<oddShift;j++){
+			if (odd&1==1) break;
+			odd>>1;
+		}
+		
+		if ((((1<<3)&codedTime[i])!=0) && (((1<<4)&codedTime[i])!=0) && (((1<<5)&codedTime[i])!=0))
+			score += lunchBreak;
+		if ((((1<<(3+oddShift))&codedTime[i])!=0) && (((1<<(4+oddShift))&codedTime[i])!=0) && (((1<<(5+oddShift))&codedTime[i])!=0))
+			score += lunchBreak;
+		/*
+		if (setLunch){
+			if (((codedTime[i]>>>3)&lunchBin)==lunchBin) score += lunchBreak;
+			if (((codedTime[i]>>>(3+oddShift))&lunchBin)==lunchBin) score += lunchBreak;
+		}*/
+	}
 	var v0 = 1<<0,
-		v1 = 1<<1,
-		v2 = 1<<2,
-		v3 = 1<<3;
+		v1 = 1<<(0+oddShift),
+		v2 = 1<<1,
+		v3 = 1<<(1+oddShift);
 	for(var i = 0; i<5; i++){
 		if((v0 & codedTime[i])!=0)
 			score += p0;
@@ -166,11 +212,12 @@ function AddToBuffer(chosenGroups, score){
 
 // descend the search tree, and put conflict-free arrangements into buffer
 // also copy the information to 
-function Descend(codedTime, chosenGroups, level)
+function Descend(codedTime, badassTime, chosenGroups, level)
 {
 	if (level == chosenCourses.length)
 	{
 		// add it to schedules
+        if (badass) AddToSchedules(badassTime, chosenGroups); else
 		AddToSchedules(codedTime, chosenGroups);
 		// add info to buffer
 		AddToBuffer(chosenGroups, 1);
@@ -185,6 +232,7 @@ function Descend(codedTime, chosenGroups, level)
 		if( !g.enabled) continue;
 		if (useVacancy && g.vacancy == 0) continue;
 		var templateTime = clone(codedTime);
+		var tmpBadassTime = clone(badassTime);
 		var conflict = false;
 		for (var j = 0; j < 5; j++)
 		{
@@ -198,8 +246,11 @@ function Descend(codedTime, chosenGroups, level)
 		}
 		if (!conflict)
 		{
+            for (var k=0;k<5;k++){
+                tmpBadassTime[k]|= g.badassTime[k];
+            }
 			chosenGroups.push(g);
-			Descend(templateTime, chosenGroups, level+1);
+			Descend(templateTime, tmpBadassTime, chosenGroups, level+1);
 			chosenGroups.pop();
 		}
 	}
@@ -231,6 +282,7 @@ function Analyze()
 	SetVacancy();
 	var chosenGroups = [];
 	var codedTime = [0,0,0,0,0];
+    var badassTime = [0,0,0,0,0];
 	buffer="";
 	nxt=0;
 	count=0;
@@ -250,7 +302,7 @@ function Analyze()
 			groupStore[checkbs[j].id].enabled = checkbs[j].checked;
 		}
 	}
-	Descend(codedTime, chosenGroups, 0);
+	Descend(codedTime, badassTime, chosenGroups, 0);
 	if(count==0)
 		alert("There is no way your selected courses can be scheduled together. Try disabling some courses.");
 	else{
@@ -258,7 +310,7 @@ function Analyze()
 		// we ignore previous buffer build up during Descend
 		// and create a new buffer according to scores
 		buffer = "";
-		schedules.sort(function(a,b){return b[0]-a[0];});
+		schedules.sort(function(a,b){return a[0]-b[0];});
 		for(var i = 0; i<schedules.length; i++)
 			AddToBuffer(schedules[i][2], schedules[i][0]);
 		id("txt_result").value = buffer;
@@ -353,6 +405,7 @@ function XML()
 			courseRow = tables[1].getElementsByTagName("tr");
 			for(var i = 1; i<courseRow.length; i++){
 				var columns = courseRow[i].getElementsByTagName("strong");
+				console.log(""+i+":"+columns[0]);
 				var index = columns[0].textContent;
 				var m = 0;
 				// open new group
