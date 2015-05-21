@@ -377,7 +377,7 @@ function Init()
 function XML()
 {
 	var req = new XMLHttpRequest();
-	var url = "https://wish.wis.ntu.edu.sg/webexe/owa/AUS_SCHEDULE.main_display1?staff_access=false&acadsem=2014;1&r_subj_code="+
+	var url = "http://wish.wis.ntu.edu.sg/webexe/owa/AUS_SCHEDULE.main_display1?staff_access=false&acadsem=2015;1&r_subj_code="+
 		id("coursecode").value+"&boption=Search&r_search_type=F";
 	var query="select * from html where url='"+url+"'";
 	var requrl = "http://query.yahooapis.com/v1/public/yql?q="+encodeURIComponent(query);
@@ -404,17 +404,17 @@ function XML()
 			course.name = courseName;
 			courseRow = tables[1].getElementsByTagName("tr");
 			for(var i = 1; i<courseRow.length; i++){
-				var columns = courseRow[i].getElementsByTagName("strong");
-				console.log(""+i+":"+columns[0]);
+				var columns = courseRow[i].getElementsByTagName("b");
+				console.log(columns);
 				var index = columns[0].textContent;
-				var m = 0;
+				var m = 1;
 				// open new group
-				if(!isNaN(index)){
+				if(!isNaN(index)&&index!=""){
 					if(group!=0)course.groups.push(group);
 					group = new Group();
 					group.course = course;
 					group.index = parseInt(index);
-					m=1;
+					m = 1;
 				}
 				session = new Session();
 				session.type  = columns[0+m].textContent;
