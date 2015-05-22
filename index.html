@@ -1,5 +1,17 @@
 <!DOCTYPE html>
-<html> <head> <title>NTU Course Planner for the Smart</title>
+<html> <head> <title>NTU Course Planner for the Smart | yuan3y</title>
+<meta name="Description" content="While other course planners try only to fit a workable timetable, this planner ensures you the minimum time you need to spend in school, and guarantees you sufficient lunch time every day.">
+<meta property="og:title" content="NTU Course Planner for the Smart">
+<meta property="og:site_name" content="Yuan3y's Lab">
+<meta property="og:url" content="http://yuan3y.com/planner/">
+<meta property="og:description" content="NTU Course Planner for the Smart. While other course planners try only to fit a workable timetable, this planner ensures you the minimum time you need to spend in school, and guarantees you sufficient lunch time every day.">
+<meta property="og:type" content="website">
+<meta property="og:image" content="http://yuan3y.com/planner/smart-planner.png">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:site" content="@yuan3y">
+<meta name="twitter:title" content="NTU Course Planner for the Smart">
+<meta name="twitter:description" content="While other course planners try only to fit a workable timetable, this planner ensures you the minimum time you need to spend in school, and guarantees you sufficient lunch time every day.">
+<meta name="twitter:image:src" content="http://yuan3y.com/planner/smart-planner.png">
 <script type="text/javascript" src="index.js"></script>
 <style type="text/css">
 html {
@@ -88,7 +100,7 @@ span.help_show{display:inline;}
 	@yuan3y, 2014.
 	</span>
 	<textarea class="src" id="src_vacancy"></textarea>
-	<em>Enter course code</em><span class="help_hide">(e.g. HW0110) and click Load course. When all your courses are loaded, click Schedule. This program by default prefers timetables without session in the morning. You can set the undesirability score of morning sessions in the number boxes below the Schedule button. The overall score of each timetable will be computed and the timetables will be sorted from best to worst.</span>
+	<em>Enter course code</em><span class="help_hide"><br/>(e.g. HW0110) and click Load course. When all your courses are loaded, click Schedule. This program by default prefers timetables without session in the morning. You can set the undesirability score of morning sessions in the number boxes below the Schedule button. The overall score of each timetable will be computed and the timetables will be sorted from best to worst.</span>
 	<div>
 		<input type="text" id="coursecode" onkeydown="if (event.keyCode == 13) { document.getElementById('loadcourse').click();}"></input>
 		<input type="button" id="loadcourse" value="Load course" onclick="XML(); document.getElementById('coursecode').value=''"/>
@@ -109,10 +121,10 @@ span.help_show{display:inline;}
 		<br/>
 		Badass (a.k.a. skipping lectures) <input type="checkbox" id="badass"/>
 	</div>
-	<em>Courses:</em> <span class="help_hide">you can disable specific course or index by unchecking the box in front of it. You may need to do this as not all listed indices may be taken by you (for example, HW0230 has 50+ indices, only a few of which may be available to your school). When you have unchecked certain courses/indices, simply click Schedule to rerun the scheduling process.</span>
+	<em>Courses:</em> <span class="help_hide"><br/>you can disable specific course or index by unchecking the box in front of it. You may need to do this as not all listed indices may be taken by you (for example, HW0230 has 50+ indices, only a few of which may be available to your school). When you have unchecked certain courses/indices, simply click Schedule to rerun the scheduling process.</span>
 	<div id="courseSelect">
 	</div>
-	<em>Results:</em> <span class="help_hide">click any line to see it displayed in the timetable at the bottom. If you have provided vacancy information, the corresponding vacancy will be shown in brackets after all the index numbers. When "undefined" appears, it means you have not provided the correct vacancy information. Depending on what you need, you may uncheck the box for the corresponding index/course, or you may follow the instruction on top of the page to re-enter the vacancy information. The number inside the brackets at the end of each line indicate the computed undesirability of a timetable (see Undesirability under "Schedule" button).</span>
+	<em>Results:</em> <span class="help_hide"><br/>click any line to see it displayed in the timetable at the bottom. If you have provided vacancy information, the corresponding vacancy will be shown in brackets after all the index numbers. When "undefined" appears, it means you have not provided the correct vacancy information. Depending on what you need, you may uncheck the box for the corresponding index/course, or you may follow the instruction on top of the page to re-enter the vacancy information. The number inside the brackets at the end of each line indicate the computed undesirability of a timetable (see Undesirability under "Schedule" button).</span>
 	<textarea readonly class="result" id="txt_result" onclick="Draw()"></textarea>
 	<center>Timetable:</center>
 	<div id="timetable">
